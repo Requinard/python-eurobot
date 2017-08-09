@@ -1,14 +1,14 @@
-
 import sys
-import asyncio
+import time
+
 import telepot
-import telepot.aio
-from telepot.aio.loop import MessageLoop
+from telepot.loop import MessageLoop
 
 """
-$ python3.5 skeletona.py <token>
-A skeleton for your async telepot programs.
+$ python2.7 skeleton.py <token>
+A skeleton for your telepot programs.
 """
+
 
 def handle(msg):
     flavor = telepot.flavor(msg)
@@ -16,15 +16,34 @@ def handle(msg):
     summary = telepot.glance(msg, flavor=flavor)
     print(flavor, summary)
 
+    if flavor == 'chat':
+        chat_id = msg['chat']['id']
+        text = msg['text']
+        tokens = text.split(" ")
 
+        # Log
+        if text.startswith('/'):
+            pass
+        elif chat_id in chatlogs.keys():
+            chatlogs[chat_id] += [text,]
+        else:
+            chatlogs[chat_id] = [text,]
+
+        if text == "/r/fiftyfifty":
+            bot.sendMessage(chat_id, "50/50")
+        elif text.startswith("/repeat"):
+            n = int(tokens[1])
+            bot.sendMessage(chat_id, "\n".join(chatlogs[chat_id][:n:-1]))
+
+chatlogs = {}
 
 
 TOKEN = sys.argv[1]  # get token from command-line
 
-bot = telepot.aio.Bot(TOKEN)
-loop = asyncio.get_event_loop()
-
-loop.create_task(MessageLoop(bot, handle).run_forever())
+bot = telepot.Bot(TOKEN)
+MessageLoop(bot, handle).run_as_thread()
 print('Listening ...')
 
-loop.run_forever()
+# Keep the program running.
+while 1:
+    time.sleep(10)
